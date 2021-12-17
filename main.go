@@ -37,6 +37,12 @@ type User struct {
 	nickname string
 	email    string
 	password string
+	posts []*Post
+}
+
+type Comment struct {
+	text string
+	like []*User
 }
 
 func (self *User) initUser(id, nickname, email, password string) {
@@ -186,6 +192,7 @@ type Post struct {
 	Title   string
 	Tag     string
 	Content string
+	Comment []*User
 }
 
 type Tag struct {
