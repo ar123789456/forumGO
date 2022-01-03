@@ -8,7 +8,14 @@ import (
 
 //Run migrates
 func Run() {
-	migrate(config.DB, Notes)
+	migrate(config.DB, Users)
+	migrate(config.DB, Posts)
+	migrate(config.DB, Categories)
+	migrate(config.DB, Tags)
+	migrate(config.DB, Comments)
+	migrate(config.DB, LikePost)
+	migrate(config.DB, CategoryPost)
+	migrate(config.DB, TagPosts)
 }
 
 func migrate(dbDriver *sql.DB, query string) {
