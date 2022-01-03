@@ -2,6 +2,9 @@ module forum
 
 go 1.17
 
-require golang.org/x/crypto v0.0.0-20211202192323-5770296d904e
+require (
+	github.com/satori/go.uuid v1.2.0
+	golang.org/x/crypto v0.0.0-20211215153901-e495a2d5b3d3
+)
 
-require github.com/satori/go.uuid v1.2.0 // indirect
+require gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
