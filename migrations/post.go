@@ -1,7 +1,7 @@
 package migrations
 
 const Posts string = `
-CREATE TABLE "posts" (
+CREATE TABLE IF NOT EXISTS "posts" (
 	"id"	INTEGER NOT NULL UNIQUE,
 	"title"	TEXT NOT NULL UNIQUE,
 	"content"	TEXT NOT NULL UNIQUE,

@@ -1,7 +1,7 @@
 package migrations
 
 const Comments string = `
-CREATE TABLE "comments" (
+CREATE TABLE IF NOT EXISTS "comments" (
 	"id"	INTEGER NOT NULL UNIQUE,
 	"text"	TEXT NOT NULL,
 	"id_user"	INTEGER NOT NULL,
