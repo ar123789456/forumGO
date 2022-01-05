@@ -29,7 +29,7 @@ func (user *User) CREATE(userInput UserParams) (*User, error) {
 		user.Password = userInput.Password
 		return user, err
 	}
-	log.Println("Unable to create note:", err)
+	log.Println("Unable to create user:", err)
 	return user, err
 }
 
