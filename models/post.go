@@ -28,7 +28,6 @@ func (param *PostParam) Parse(r *http.Request) error {
 	err := r.ParseForm()
 	param.Title = r.FormValue("Title")
 	param.Content = r.FormValue("Content")
-	param.User_id = 1
 	log.Println("Models/PostParams:", err)
 	return err
 }

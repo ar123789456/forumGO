@@ -36,6 +36,6 @@ func (user *User) CREATE(userInput UserParams) (*User, error) {
 func (user *User) FETCH(nick string) (*User, error) {
 	err := config.DB.QueryRow(
 		"SELECT ID, NicName, Email, Password FROM user WHERE NicName=?", nick).Scan(
-		user.Id, user.Nickname, user.Email, user.Password)
+		&user.Id, &user.Nickname, &user.Email, &user.Password)
 	return user, err
 }
