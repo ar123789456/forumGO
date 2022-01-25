@@ -31,6 +31,12 @@ func (*PostController) CreateNewPost(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (*PostController) GetAllInTag(w http.ResponseWriter, r *http.Request) {
+}
+
+func (*PostController) GetAllInCategory(w http.ResponseWriter, r *http.Request) {
+}
+
 func (*PostController) GetAll(w http.ResponseWriter, r *http.Request) {
 	var posts models.Post
 	allPosts, err := posts.GETALL()

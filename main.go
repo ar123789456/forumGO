@@ -22,9 +22,12 @@ func main() {
 	}
 
 	var postH controllers.PostController
+	var userH controllers.UserController
 
 	http.HandleFunc("/", postH.GetAll)
 	http.HandleFunc("/post/create", postH.CreateNewPost)
+	http.HandleFunc("/login", userH.LogIn)
+	http.HandleFunc("/registration", userH.Registration)
 
 	fmt.Println("Server is listening...")
 	http.ListenAndServe(":8080", nil)
