@@ -24,6 +24,7 @@ func main() {
 	var postH controllers.PostController
 
 	http.HandleFunc("/", postH.GetAll)
+	http.HandleFunc("/post/create", postH.CreateNewPost)
 
 	fmt.Println("Server is listening...")
 	http.ListenAndServe(":8080", nil)

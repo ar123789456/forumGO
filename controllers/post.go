@@ -14,6 +14,12 @@ type PostController struct{}
 func (*PostController) CreateNewPost(w http.ResponseWriter, r *http.Request) {
 	var params models.PostParam
 	var post models.Post
+
+	if r.Method == http.MethodGet {
+		config.Tmpl.ExecuteTemplate(w, "addPost.html", nil)
+		return
+	}
+
 	err := params.Parse(r)
 	if err != nil {
 		log.Println("Controller/ dont pars postParam", err)
