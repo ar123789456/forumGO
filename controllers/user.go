@@ -6,6 +6,7 @@ import (
 	"forum/models"
 	"log"
 	"net/http"
+	"time"
 
 	uuid "github.com/satori/go.uuid"
 	"golang.org/x/crypto/bcrypt"
@@ -46,9 +47,9 @@ func (*UserController) LogIn(w http.ResponseWriter, r *http.Request) {
 	if logIn {
 		value := uuid.NewV1().String()
 		cookie := &http.Cookie{
-			Name:   nick,
-			Value:  value,
-			MaxAge: 300,
+			Name:    "session_token",
+			Value:   value,
+			Expires: time.Now().Add(120 * time.Minute),
 		}
 		r.AddCookie(cookie)
 		http.SetCookie(w, cookie)

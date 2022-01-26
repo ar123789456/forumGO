@@ -1,9 +1,9 @@
 package main
 
 import (
-	"fmt"
 	"forum/config"
 	"forum/controllers"
+	"forum/middleware"
 	"log"
 	"net/http"
 )
@@ -24,11 +24,16 @@ func main() {
 	var postH controllers.PostController
 	var userH controllers.UserController
 
-	http.HandleFunc("/", postH.GetAll)
-	http.HandleFunc("/post/create", postH.CreateNewPost)
-	http.HandleFunc("/login", userH.LogIn)
-	http.HandleFunc("/registration", userH.Registration)
+	mux := http.NewServeMux()
 
-	fmt.Println("Server is listening...")
-	http.ListenAndServe(":8080", nil)
+	mux.HandleFunc("/", postH.GetAll)
+	mux.Handle("/post/create", middleware.Authentication(http.HandlerFunc(postH.CreateNewPost)))
+	mux.HandleFunc("/login", userH.LogIn)
+	mux.HandleFunc("/registration", userH.Registration)
+
+	handler := middleware.Logging(mux)
+
+	log.Fatal(http.ListenAndServe("localhost:8080", handler))
+
+	// http.ListenAndServe(":8080", nil)
 }
