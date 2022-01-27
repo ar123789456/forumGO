@@ -14,6 +14,7 @@ type Post struct {
 	Creat_at  string `json:"creat_at"`
 	Update_to string `json:"update_to"`
 	User_id   int    `json:"user_id"`
+	Like      int    `json:"like"`
 }
 
 type PostParam struct {

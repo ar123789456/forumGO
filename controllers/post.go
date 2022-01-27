@@ -90,12 +90,33 @@ func (*PostController) GetAllInCategory(w http.ResponseWriter, r *http.Request) 
 
 func (*PostController) GetAll(w http.ResponseWriter, r *http.Request) {
 	var posts models.Post
+	var like models.Like
 	allPosts, err := posts.GETALL()
+
+	if r.Method == http.MethodPost {
+
+		post_id, err := strconv.Atoi(r.FormValue("Post_id"))
+		if err == nil {
+			_, err = like.CREATE(post_id, 1)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+
+			}
+		}
+	}
 
 	if err != nil {
 		log.Println("Controller/Post:", err)
 		fmt.Fprint(w, http.StatusInternalServerError)
 		return
+	}
+
+	for i, post := range allPosts {
+		allPosts[i].Like, err = like.GET(post.Id)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+		}
+
 	}
 
 	err = config.Tmpl.ExecuteTemplate(w, "main.html", allPosts)

@@ -15,6 +15,10 @@
     <h3>{{ .Title }}</h3>
     <hr>
     <p>{{ .Content }}</p>
+    <form method="post">
+        {{.Like}}<input type="number" name="Post_id" value="{{.Id}}">
+        <input type="submit">
+    </form>
     {{ end }}
 </body>
 </html>
