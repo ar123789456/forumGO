@@ -11,10 +11,17 @@
         <h1>Create post</h1>
         <h3>Title</h3>
         <input type="text" name="Title">
+        <h3>category:</h3>
+        <select name="Category">
+            {{range .Category}}
+            <option value="{{.Title}}">{{.Title}}</option>
+            {{end}}
+
+          </select>
         <h3>tags:</h3>
         <p><select size="3" multiple name="Tag[]">
             <option disabled>Выберите теги</option>
-            {{range .}}
+            {{range .Tag}}
             <option value="{{.Title}}">{{.Title}}</option>
             {{end}}
            </select></p>

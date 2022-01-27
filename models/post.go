@@ -17,17 +17,18 @@ type Post struct {
 }
 
 type PostParam struct {
-	Title       string
-	Content     string
-	User_id     int
-	Category_id int
-	Tags        []string
+	Title    string
+	Content  string
+	User_id  int
+	Category string
+	Tags     []string
 }
 
 func (param *PostParam) Parse(r *http.Request) error {
 	err := r.ParseForm()
 	param.Title = r.FormValue("Title")
 	param.Content = r.FormValue("Content")
+	param.Category = r.FormValue("Category")
 	param.Tags = r.Form["Tag[]"]
 	return err
 }
