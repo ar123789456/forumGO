@@ -12,7 +12,12 @@
         <h3>Title</h3>
         <input type="text" name="Title">
         <h3>tags:</h3>
-        <input type="text" name="Tag">
+        <p><select size="3" multiple name="Tag[]">
+            <option disabled>Выберите теги</option>
+            {{range .}}
+            <option value="{{.Title}}">{{.Title}}</option>
+            {{end}}
+           </select></p>
         <h3>Content</h3>
         <textarea name="Content" cols="30" rows="10">
             Lorem ipsum dolor sit amet consectetur adipisicing elit. Minima, sint voluptas veritatis tempore, alias quaerat accusantium vel, eum corporis quia ad dolor modi consequatur explicabo. Eveniet ducimus fugit doloribus vitae.

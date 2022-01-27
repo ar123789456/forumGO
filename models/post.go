@@ -21,13 +21,14 @@ type PostParam struct {
 	Content     string
 	User_id     int
 	Category_id int
-	// tags        []int
+	Tags        []string
 }
 
 func (param *PostParam) Parse(r *http.Request) error {
 	err := r.ParseForm()
 	param.Title = r.FormValue("Title")
 	param.Content = r.FormValue("Content")
+	param.Tags = r.Form["Tag[]"]
 	return err
 }
 

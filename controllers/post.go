@@ -14,9 +14,16 @@ type PostController struct{}
 func (*PostController) CreateNewPost(w http.ResponseWriter, r *http.Request) {
 	var params models.PostParam
 	var post models.Post
+	var tags models.Tag
+	var tagPost models.TagPost
 
 	if r.Method == http.MethodGet {
-		config.Tmpl.ExecuteTemplate(w, "addPost.html", nil)
+		allTag, err := tags.GETALL()
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+		}
+
+		config.Tmpl.ExecuteTemplate(w, "addPost.html", allTag)
 		return
 	}
 
@@ -28,6 +35,16 @@ func (*PostController) CreateNewPost(w http.ResponseWriter, r *http.Request) {
 	_, err = post.CREATE(params)
 	if err != nil {
 		fmt.Fprint(w, err)
+	}
+	for _, title := range params.Tags {
+		_, err = tags.GET(title)
+		if err != nil {
+			continue
+		}
+		_, err = tagPost.CREATE(tags.Id, post.Id)
+		if err != nil {
+			continue
+		}
 	}
 }
 
