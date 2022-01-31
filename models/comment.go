@@ -32,3 +32,42 @@ func (comment *Comment) CREATE(commentParams CommentParams) (*Comment, error) {
 	log.Println("Unable to create comment:", err)
 	return comment, err
 }
+
+func (comment *Comment) GET(id int) ([]Comment, error) {
+	row, err := config.DB.Query("SELECT * FROM comments WHERE id_post=?", id)
+	var comments []Comment
+
+	if err == nil {
+		for row.Next() {
+			var currentComment Comment
+			row.Scan(
+				&currentComment.ID,
+				&currentComment.Text,
+				&currentComment.User_id,
+				&currentComment.Post_id,
+			)
+			comments = append(comments, currentComment)
+		}
+	}
+
+	return comments, err
+}
+
+// rows, err := config.DB.Query("SELECT * FROM posts")
+// var posts []Post
+// if err == nil {
+// 	for rows.Next() {
+// 		var currentPost Post
+// 		rows.Scan(
+// 			&currentPost.Id,
+// 			&currentPost.Title,
+// 			&currentPost.Content,
+// 			&currentPost.Creat_at,
+// 			&currentPost.Update_to,
+// 			&currentPost.User_id,
+// 		)
+// 		posts = append(posts, currentPost)
+// 	}
+// 	return posts, err
+// }
+// return posts, err

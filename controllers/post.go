@@ -88,6 +88,73 @@ func (*PostController) GetAllInTag(w http.ResponseWriter, r *http.Request) {
 func (*PostController) GetAllInCategory(w http.ResponseWriter, r *http.Request) {
 }
 
+func (*PostController) GetSinglePost(w http.ResponseWriter, r *http.Request) {
+	var post models.Post
+	var user models.User
+	var comment models.Comment
+	var commParams models.CommentParams
+	var post_id int
+	var user_id int
+
+	if r.URL.Path[6:] != "" {
+		var err error
+		post_id, err = strconv.Atoi(r.URL.Path[6:])
+		if err != nil {
+			http.NotFound(w, r)
+			return
+		}
+	}
+	if r.Method == http.MethodPost {
+		com := r.FormValue("Comment")
+		if com != "" {
+			c, err := r.Cookie("session_token")
+			if err == nil {
+				user_id, err = user.GetUserId(c.Value)
+				if err == nil {
+					commParams.Text = com
+					commParams.Post_id = post_id
+					commParams.User_id = user_id
+					_, err := comment.CREATE(commParams)
+					if err != nil {
+						w.WriteHeader(http.StatusInternalServerError)
+					}
+				}
+			}
+
+		} else {
+			w.WriteHeader(http.StatusInternalServerError)
+		}
+	}
+
+	_, err := post.GET(post_id)
+
+	if err != nil {
+		log.Println("Controller/Post GET:", err)
+		fmt.Fprint(w, http.StatusInternalServerError)
+		return
+	}
+
+	allComment, err := comment.GET(post_id)
+
+	if err == nil {
+		w.WriteHeader(http.StatusInternalServerError)
+	}
+
+	var allInfo struct {
+		AllComment []models.Comment
+		Post       models.Post
+	}
+	allInfo.AllComment = allComment
+	allInfo.Post = post
+
+	err = config.Tmpl.ExecuteTemplate(w, "singlePost.html", allInfo)
+
+	if err != nil {
+		log.Println("Controller/Post:", err)
+		fmt.Fprint(w, http.StatusInternalServerError)
+	}
+}
+
 func (*PostController) GetAll(w http.ResponseWriter, r *http.Request) {
 	var posts models.Post
 	var like models.Like

@@ -46,6 +46,11 @@ func (*UserController) LogIn(w http.ResponseWriter, r *http.Request) {
 	logIn := CheckPasswordHash(passW, user.Password)
 	if logIn {
 		value := uuid.NewV1().String()
+		_, err = user.UPDATEuid(value)
+		if err != nil {
+			log.Println(err)
+			return
+		}
 		cookie := &http.Cookie{
 			Name:    "session_token",
 			Value:   value,

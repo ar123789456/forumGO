@@ -39,3 +39,17 @@ func (user *User) FETCH(nick string) (*User, error) {
 		&user.Id, &user.Nickname, &user.Email, &user.Password)
 	return user, err
 }
+
+func (user *User) GetUserId(UID string) (int, error) {
+	err := config.DB.QueryRow(
+		"SELECT ID FROM user WHERE UID=?", UID).Scan(
+		&user.Id)
+	return user.Id, err
+}
+
+func (user *User) UPDATEuid(UID string) (*User, error) {
+	// ToDo add category_id
+	statement, _ := config.DB.Prepare("UPDATE user SET UID = ?;")
+	_, err := statement.Exec(UID)
+	return user, err
+}
