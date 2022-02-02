@@ -16,7 +16,9 @@
         <hr>
         {{range .AllComment}}
         <div>
-            {{.Text}}
+            
+            <h4>{{.User}}</h4>
+            <p>{{.Text}}</p>
         </div>
         {{end}}
         <form method="post">

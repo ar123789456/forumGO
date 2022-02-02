@@ -119,6 +119,8 @@ func (*PostController) GetSinglePost(w http.ResponseWriter, r *http.Request) {
 						w.WriteHeader(http.StatusInternalServerError)
 					}
 				}
+			} else {
+				w.WriteHeader(http.StatusUnauthorized)
 			}
 
 		} else {

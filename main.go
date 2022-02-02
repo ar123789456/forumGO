@@ -4,6 +4,7 @@ import (
 	"forum/config"
 	"forum/controllers"
 	"forum/middleware"
+	"forum/migrations"
 	"log"
 	"net/http"
 )
@@ -20,13 +21,16 @@ func main() {
 		log.Println(err)
 		return
 	}
+	migrations.Run()
 
 	var postH controllers.PostController
 	var userH controllers.UserController
 
 	mux := http.NewServeMux()
+	// router := httprouter.New()
 
 	mux.HandleFunc("/", postH.GetAll)
+	mux.Handle("/post/", http.HandlerFunc(postH.GetSinglePost))
 	mux.Handle("/post/create", middleware.Authentication(http.HandlerFunc(postH.CreateNewPost)))
 	mux.HandleFunc("/login", userH.LogIn)
 	mux.HandleFunc("/registration", userH.Registration)

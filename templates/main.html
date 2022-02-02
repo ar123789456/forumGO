@@ -12,7 +12,7 @@
     <a href="/login">login</a>
 
     {{ range . }}
-    <h3>{{ .Title }}</h3>
+    <h3><a href="/post/{{.Id}}">{{ .Title }}</a></h3>
     <hr>
     <p>{{ .Content }}</p>
     <form method="post">

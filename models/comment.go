@@ -8,6 +8,7 @@ import (
 type Comment struct {
 	ID      int    `json:"id"`
 	Text    string `json:"text"`
+	User    string `json:"user"`
 	User_id int    `json:"user_id"`
 	Post_id int    `json:"post_id"`
 }
@@ -40,12 +41,21 @@ func (comment *Comment) GET(id int) ([]Comment, error) {
 	if err == nil {
 		for row.Next() {
 			var currentComment Comment
+			var user User
 			row.Scan(
 				&currentComment.ID,
 				&currentComment.Text,
 				&currentComment.User_id,
 				&currentComment.Post_id,
 			)
+
+			_, err = user.GetUser(currentComment.User_id)
+
+			if err != nil {
+				continue
+			}
+			currentComment.User = user.Nickname
+
 			comments = append(comments, currentComment)
 		}
 	}

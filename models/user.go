@@ -42,9 +42,16 @@ func (user *User) FETCH(nick string) (*User, error) {
 
 func (user *User) GetUserId(UID string) (int, error) {
 	err := config.DB.QueryRow(
-		"SELECT ID FROM user WHERE UID=?", UID).Scan(
-		&user.Id)
+		"SELECT ID, NicName, Email FROM user WHERE UID=?", UID).Scan(
+		&user.Id, &user.Nickname, &user.Email)
 	return user.Id, err
+}
+
+func (user *User) GetUser(ID int) (*User, error) {
+	err := config.DB.QueryRow(
+		"SELECT ID, NicName, Email FROM user WHERE ID=?", ID).Scan(
+		&user.Id, &user.Nickname, &user.Email)
+	return user, err
 }
 
 func (user *User) UPDATEuid(UID string) (*User, error) {
