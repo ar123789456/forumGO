@@ -10,6 +10,7 @@ import (
 )
 
 func main() {
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	_, err := config.InitializeDB()
 	if err != nil {
 		log.Println(err)
@@ -32,6 +33,8 @@ func main() {
 	mux.HandleFunc("/", postH.GetAll)
 	mux.Handle("/post/", http.HandlerFunc(postH.GetSinglePost))
 	mux.Handle("/post/create", middleware.Authentication(http.HandlerFunc(postH.CreateNewPost)))
+	mux.HandleFunc("/tag/", postH.GetAllInTag)
+	mux.HandleFunc("/category/", postH.GetAllInCategory)
 	mux.HandleFunc("/login", userH.LogIn)
 	mux.HandleFunc("/registration", userH.Registration)
 

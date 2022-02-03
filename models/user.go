@@ -54,9 +54,9 @@ func (user *User) GetUser(ID int) (*User, error) {
 	return user, err
 }
 
-func (user *User) UPDATEuid(UID string) (*User, error) {
+func (user *User) UPDATEuid(UID string, id int) (*User, error) {
 	// ToDo add category_id
-	statement, _ := config.DB.Prepare("UPDATE user SET UID = ?;")
-	_, err := statement.Exec(UID)
+	statement, _ := config.DB.Prepare("UPDATE user SET UID = ? WHERE id = ?;")
+	_, err := statement.Exec(UID, id)
 	return user, err
 }

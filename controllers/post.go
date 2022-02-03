@@ -83,9 +83,67 @@ func (*PostController) CreateNewPost(w http.ResponseWriter, r *http.Request) {
 }
 
 func (*PostController) GetAllInTag(w http.ResponseWriter, r *http.Request) {
+	var posts models.Post
+	var like models.Like
+
+	tag := r.URL.Path[len("/tag/"):]
+
+	allPosts, err := posts.GETALLINTAG(tag)
+
+	likePost(w, r)
+
+	if err != nil {
+		log.Println("Controller/Post:", err)
+		fmt.Fprint(w, http.StatusInternalServerError)
+		return
+	}
+
+	for i, post := range allPosts {
+		allPosts[i].Like, err = like.GET(post.Id)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+		}
+
+	}
+
+	err = config.Tmpl.ExecuteTemplate(w, "main.html", allPosts)
+
+	if err != nil {
+		log.Println("Controller/Post:", err)
+		fmt.Fprint(w, http.StatusInternalServerError)
+	}
 }
 
 func (*PostController) GetAllInCategory(w http.ResponseWriter, r *http.Request) {
+	var posts models.Post
+	var like models.Like
+
+	category := r.URL.Path[len("/category/"):]
+
+	allPosts, err := posts.GETALLINCATEGORY(category)
+
+	likePost(w, r)
+
+	if err != nil {
+		log.Println("Controller/Post:", err)
+		fmt.Fprint(w, http.StatusInternalServerError)
+		return
+	}
+
+	for i, post := range allPosts {
+		allPosts[i].Like, err = like.GET(post.Id)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+		}
+
+	}
+
+	err = config.Tmpl.ExecuteTemplate(w, "main.html", allPosts)
+
+	if err != nil {
+		log.Println("Controller/Post:", err)
+		fmt.Fprint(w, http.StatusInternalServerError)
+	}
 }
 
 func (*PostController) GetSinglePost(w http.ResponseWriter, r *http.Request) {
@@ -162,17 +220,7 @@ func (*PostController) GetAll(w http.ResponseWriter, r *http.Request) {
 	var like models.Like
 	allPosts, err := posts.GETALL()
 
-	if r.Method == http.MethodPost {
-
-		post_id, err := strconv.Atoi(r.FormValue("Post_id"))
-		if err == nil {
-			_, err = like.CREATE(post_id, 1)
-			if err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-
-			}
-		}
-	}
+	likePost(w, r)
 
 	if err != nil {
 		log.Println("Controller/Post:", err)
@@ -246,5 +294,28 @@ func (*PostController) DELETE(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Println("Controller/Post:", err)
 		fmt.Fprint(w, http.StatusInternalServerError)
+	}
+}
+
+func likePost(w http.ResponseWriter, r *http.Request) {
+	var like models.Like
+	var user models.User
+
+	if r.Method == http.MethodPost {
+		c, err := r.Cookie("session_token")
+		if err == nil {
+			user_id, err := user.GetUserId(c.Value)
+			if err == nil {
+				post_id, err := strconv.Atoi(r.FormValue("Post_id"))
+				if err == nil {
+					_, err = like.CREATE(post_id, user_id)
+					if err != nil {
+						w.WriteHeader(http.StatusInternalServerError)
+					}
+				}
+			}
+		} else {
+			w.WriteHeader(http.StatusUnauthorized)
+		}
 	}
 }

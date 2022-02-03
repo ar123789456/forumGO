@@ -98,3 +98,63 @@ func (*Post) GETALL() ([]Post, error) {
 	}
 	return posts, err
 }
+
+func (*Post) GETALLINTAG(tag string) ([]Post, error) {
+	rows, err := config.DB.Query(`SELECT posts.id, posts.title, content, create_at, update_at, id_user
+	FROM
+		posts,
+		tags,
+		tag_posts
+	WHERE 
+ 		posts.id = tag_posts.id_post
+		AND tags.id = tag_posts.id_tag
+		AND tags.title = ?;
+`, tag)
+	var posts []Post
+	if err == nil {
+		for rows.Next() {
+			var currentPost Post
+			rows.Scan(
+				&currentPost.Id,
+				&currentPost.Title,
+				&currentPost.Content,
+				&currentPost.Creat_at,
+				&currentPost.Update_to,
+				&currentPost.User_id,
+			)
+			posts = append(posts, currentPost)
+		}
+		return posts, err
+	}
+	return posts, err
+}
+
+func (*Post) GETALLINCATEGORY(category string) ([]Post, error) {
+	rows, err := config.DB.Query(`SELECT posts.id, posts.title, content, create_at, update_at, id_user
+	FROM
+		posts,
+		categories,
+		category_posts
+	WHERE 
+ 		posts.id = category_posts.id_post
+		AND categories.id = category_posts.id_category
+		AND categories.title = ?;
+`, category)
+	var posts []Post
+	if err == nil {
+		for rows.Next() {
+			var currentPost Post
+			rows.Scan(
+				&currentPost.Id,
+				&currentPost.Title,
+				&currentPost.Content,
+				&currentPost.Creat_at,
+				&currentPost.Update_to,
+				&currentPost.User_id,
+			)
+			posts = append(posts, currentPost)
+		}
+		return posts, err
+	}
+	return posts, err
+}
