@@ -85,6 +85,7 @@ func (*PostController) CreateNewPost(w http.ResponseWriter, r *http.Request) {
 func (*PostController) GetAllInTag(w http.ResponseWriter, r *http.Request) {
 	var posts models.Post
 	var like models.Like
+	var tags models.Tag
 
 	tag := r.URL.Path[len("/tag/"):]
 
@@ -94,6 +95,7 @@ func (*PostController) GetAllInTag(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		log.Println("Controller/Post:", err)
+		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprint(w, http.StatusInternalServerError)
 		return
 	}
@@ -106,7 +108,23 @@ func (*PostController) GetAllInTag(w http.ResponseWriter, r *http.Request) {
 
 	}
 
-	err = config.Tmpl.ExecuteTemplate(w, "main.html", allPosts)
+	allTag, err := tags.GETALL()
+
+	if err != nil {
+		log.Println("Controller/Post:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprint(w, http.StatusInternalServerError)
+		return
+	}
+
+	var allInfo struct {
+		Allpost []models.Post
+		Alltag  []models.Tag
+	}
+	allInfo.Allpost = allPosts
+	allInfo.Alltag = allTag
+
+	err = config.Tmpl.ExecuteTemplate(w, "main.html", allInfo)
 
 	if err != nil {
 		log.Println("Controller/Post:", err)
@@ -117,6 +135,7 @@ func (*PostController) GetAllInTag(w http.ResponseWriter, r *http.Request) {
 func (*PostController) GetAllInCategory(w http.ResponseWriter, r *http.Request) {
 	var posts models.Post
 	var like models.Like
+	var tags models.Tag
 
 	category := r.URL.Path[len("/category/"):]
 
@@ -138,7 +157,23 @@ func (*PostController) GetAllInCategory(w http.ResponseWriter, r *http.Request) 
 
 	}
 
-	err = config.Tmpl.ExecuteTemplate(w, "main.html", allPosts)
+	allTag, err := tags.GETALL()
+
+	if err != nil {
+		log.Println("Controller/Post:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprint(w, http.StatusInternalServerError)
+		return
+	}
+
+	var allInfo struct {
+		Allpost []models.Post
+		Alltag  []models.Tag
+	}
+	allInfo.Allpost = allPosts
+	allInfo.Alltag = allTag
+
+	err = config.Tmpl.ExecuteTemplate(w, "main.html", allInfo)
 
 	if err != nil {
 		log.Println("Controller/Post:", err)
@@ -218,6 +253,7 @@ func (*PostController) GetSinglePost(w http.ResponseWriter, r *http.Request) {
 func (*PostController) GetAll(w http.ResponseWriter, r *http.Request) {
 	var posts models.Post
 	var like models.Like
+	var tags models.Tag
 	allPosts, err := posts.GETALL()
 
 	likePost(w, r)
@@ -236,7 +272,23 @@ func (*PostController) GetAll(w http.ResponseWriter, r *http.Request) {
 
 	}
 
-	err = config.Tmpl.ExecuteTemplate(w, "main.html", allPosts)
+	allTag, err := tags.GETALL()
+
+	if err != nil {
+		log.Println("Controller/Post:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprint(w, http.StatusInternalServerError)
+		return
+	}
+
+	var allInfo struct {
+		Allpost []models.Post
+		Alltag  []models.Tag
+	}
+	allInfo.Allpost = allPosts
+	allInfo.Alltag = allTag
+
+	err = config.Tmpl.ExecuteTemplate(w, "main.html", allInfo)
 
 	if err != nil {
 		log.Println("Controller/Post:", err)

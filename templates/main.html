@@ -7,11 +7,18 @@
     <title>Document</title>
 </head>
 <body>
+
     <a href="/registration">Registration</a>
-    <a href="/createpost">Create Post</a>
+    <a href="/post/create">Create Post</a>
     <a href="/login">login</a>
 
-    {{ range . }}
+    <div>
+        {{ range .Alltag}}
+            <h3><a href="/tag/{{ .Title }}">{{ .Title }}</a></h3>
+        {{end}}
+    </div>
+
+    {{ range .Allpost }}
     <h3><a href="/post/{{.Id}}">{{ .Title }}</a></h3>
     <hr>
     <p>{{ .Content }}</p>
