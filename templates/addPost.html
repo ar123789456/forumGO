@@ -116,7 +116,7 @@
               <i class="fa fa-caret-down"></i>
             </button>
             <div class="dropdown-content">
-                {{ range .Allcategory}}
+                {{ range .Category}}
                 <a href="/category/{{ .Title }}">{{ .Title }}</a>
                 {{end}}
             </div>
@@ -135,7 +135,7 @@
     <div>
         <p><h3> Tags:
             
-        {{ range .Alltag}}
+        {{ range .Tag}}
             <a href="/tag/{{ .Title }}">{{ .Title }}</a>,
         {{end}}
         </h3>

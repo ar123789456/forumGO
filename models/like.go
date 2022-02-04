@@ -23,11 +23,11 @@ func (like *Like) CREATE(Post_id, User_id int) (*Like, error) {
 }
 
 func (like *Like) DELETE(Post_id, User_id int) error {
-	statement, _ := config.DB.Prepare("DELETE FROM likes_posts WHERE id_post = ?, id_user = ?")
+	statement, _ := config.DB.Prepare("DELETE FROM likes_posts WHERE id_post = ? AND id_user = ?")
 	_, err := statement.Exec(Post_id, User_id)
 	return err
 }
-func (*Like) GET(Post_id int) (int, error) {
+func (*Like) GETSCORE(Post_id int) (int, error) {
 	rows, err := config.DB.Query("SELECT * FROM likes_posts WHERE id_post = ? ", Post_id)
 	var like int
 	if err == nil {
@@ -36,5 +36,11 @@ func (*Like) GET(Post_id int) (int, error) {
 		}
 		return like, err
 	}
+	return like, err
+}
+
+func (like *Like) GET(Post_id, User_id int) (*Like, error) {
+	rows := config.DB.QueryRow("SELECT * FROM likes_posts WHERE id_post = ? AND id_user = ?", Post_id, User_id)
+	err := rows.Scan(&like.Post_id, &like.User_id)
 	return like, err
 }

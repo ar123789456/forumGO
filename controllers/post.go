@@ -11,6 +11,11 @@ import (
 
 type PostController struct{}
 
+type allInfoCreate struct {
+	Tag      []models.Tag
+	Category []models.Category
+}
+
 func (*PostController) CreateNewPost(w http.ResponseWriter, r *http.Request) {
 	var params models.PostParam
 	var post models.Post
@@ -21,19 +26,7 @@ func (*PostController) CreateNewPost(w http.ResponseWriter, r *http.Request) {
 	var err error
 
 	if r.Method == http.MethodGet {
-		var baseSite struct {
-			Tag      []models.Tag
-			Category []models.Category
-		}
-		baseSite.Tag, err = tags.GETALL()
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-		}
-		baseSite.Category, err = category.GETALL()
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-		}
-
+		baseSite := GetInfo(w, r)
 		config.Tmpl.ExecuteTemplate(w, "addPost.html", baseSite)
 		return
 	}
@@ -54,19 +47,9 @@ func (*PostController) CreateNewPost(w http.ResponseWriter, r *http.Request) {
 	_, err = categoryPost.CREATE(category.Id, post.Id)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		var baseSite struct {
-			Tag      []models.Tag
-			Category []models.Category
-		}
-		baseSite.Tag, err = tags.GETALL()
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-		}
-		baseSite.Category, err = category.GETALL()
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-		}
+		baseSite := GetInfo(w, r)
 		config.Tmpl.ExecuteTemplate(w, "addPost.html", baseSite)
+		return
 	}
 	for _, title := range params.Tags {
 		_, err = tags.GET(title)
@@ -102,7 +85,7 @@ func (*PostController) GetAllInTag(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for i, post := range allPosts {
-		allPosts[i].Like, err = like.GET(post.Id)
+		allPosts[i].Like, err = like.GETSCORE(post.Id)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 		}
@@ -163,7 +146,7 @@ func (*PostController) GetAllInCategory(w http.ResponseWriter, r *http.Request) 
 	}
 
 	for i, post := range allPosts {
-		allPosts[i].Like, err = like.GET(post.Id)
+		allPosts[i].Like, err = like.GETSCORE(post.Id)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 		}
@@ -262,9 +245,11 @@ func (*PostController) GetSinglePost(w http.ResponseWriter, r *http.Request) {
 	var allInfo struct {
 		AllComment []models.Comment
 		Post       models.Post
+		BaseSite   allInfoCreate
 	}
 	allInfo.AllComment = allComment
 	allInfo.Post = post
+	allInfo.BaseSite = GetInfo(w, r)
 
 	err = config.Tmpl.ExecuteTemplate(w, "singlePost.html", allInfo)
 
@@ -290,7 +275,7 @@ func (*PostController) GetAll(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for i, post := range allPosts {
-		allPosts[i].Like, err = like.GET(post.Id)
+		allPosts[i].Like, err = like.GETSCORE(post.Id)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 		}
@@ -390,20 +375,60 @@ func likePost(w http.ResponseWriter, r *http.Request) {
 	var user models.User
 
 	if r.Method == http.MethodPost {
+		//Check Session cookie
 		c, err := r.Cookie("session_token")
-		if err == nil {
-			user_id, err := user.GetUserId(c.Value)
-			if err == nil {
-				post_id, err := strconv.Atoi(r.FormValue("Post_id"))
-				if err == nil {
-					_, err = like.CREATE(post_id, user_id)
-					if err != nil {
-						w.WriteHeader(http.StatusInternalServerError)
-					}
-				}
+		if err != nil {
+			w.WriteHeader(http.StatusUnauthorized)
+			log.Println(err)
+			return
+		}
+		user_id, err := user.GetUserId(c.Value)
+		if err != nil {
+			w.WriteHeader(http.StatusNotImplemented)
+			log.Println(err)
+			return
+		}
+		post_id, err := strconv.Atoi(r.FormValue("Post_id"))
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			log.Println(err)
+			return
+		}
+		_, err = like.GET(post_id, user_id)
+
+		if post_id == like.Post_id && user_id == like.User_id {
+			err = like.DELETE(post_id, user_id)
+			if err != nil {
+				w.WriteHeader(http.StatusNotImplemented)
+				log.Println(err)
+				return
 			}
 		} else {
-			w.WriteHeader(http.StatusUnauthorized)
+			_, err = like.CREATE(post_id, user_id)
+			if err != nil {
+				w.WriteHeader(http.StatusNotImplemented)
+				log.Println(err)
+				return
+			}
 		}
+
 	}
+}
+
+func GetInfo(w http.ResponseWriter, r *http.Request) allInfoCreate {
+	var category models.Category
+	var tags models.Tag
+	var baseSite allInfoCreate
+	var err error
+
+	baseSite.Tag, err = tags.GETALL()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+	}
+	baseSite.Category, err = category.GETALL()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+	}
+
+	return baseSite
 }
