@@ -75,8 +75,6 @@ func (*PostController) GetAllInTag(w http.ResponseWriter, r *http.Request) {
 
 	allPosts, err := posts.GETALLINTAG(tag)
 
-	likePost(w, r)
-
 	if err != nil {
 		log.Println("Controller/Post:", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -137,8 +135,6 @@ func (*PostController) GetAllInCategory(w http.ResponseWriter, r *http.Request) 
 
 	allPosts, err := posts.GETALLINCATEGORY(category)
 
-	likePost(w, r)
-
 	if err != nil {
 		log.Println("Controller/Post:", err)
 		fmt.Fprint(w, http.StatusInternalServerError)
@@ -190,11 +186,8 @@ func (*PostController) GetAllInCategory(w http.ResponseWriter, r *http.Request) 
 
 func (*PostController) GetSinglePost(w http.ResponseWriter, r *http.Request) {
 	var post models.Post
-	var user models.User
 	var comment models.Comment
-	var commParams models.CommentParams
 	var post_id int
-	var user_id int
 
 	if r.URL.Path[6:] != "" {
 		var err error
@@ -202,29 +195,6 @@ func (*PostController) GetSinglePost(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			http.NotFound(w, r)
 			return
-		}
-	}
-	if r.Method == http.MethodPost {
-		com := r.FormValue("Comment")
-		if com != "" {
-			c, err := r.Cookie("session_token")
-			if err == nil {
-				user_id, err = user.GetUserId(c.Value)
-				if err == nil {
-					commParams.Text = com
-					commParams.Post_id = post_id
-					commParams.User_id = user_id
-					_, err := comment.CREATE(commParams)
-					if err != nil {
-						w.WriteHeader(http.StatusInternalServerError)
-					}
-				}
-			} else {
-				w.WriteHeader(http.StatusUnauthorized)
-			}
-
-		} else {
-			w.WriteHeader(http.StatusInternalServerError)
 		}
 	}
 
@@ -265,8 +235,6 @@ func (*PostController) GetAll(w http.ResponseWriter, r *http.Request) {
 	var tags models.Tag
 	var categories models.Category
 	allPosts, err := posts.GETALL()
-
-	likePost(w, r)
 
 	if err != nil {
 		log.Println("Controller/Post:", err)
@@ -370,49 +338,94 @@ func (*PostController) DELETE(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func likePost(w http.ResponseWriter, r *http.Request) {
+func (*PostController) LikePost(w http.ResponseWriter, r *http.Request) {
 	var like models.Like
 	var user models.User
+	fmt.Println(r.Header.Get("Referer"))
 
 	if r.Method == http.MethodPost {
 		//Check Session cookie
 		c, err := r.Cookie("session_token")
 		if err != nil {
-			w.WriteHeader(http.StatusUnauthorized)
+			http.Redirect(w, r, "/login", http.StatusUnauthorized)
 			log.Println(err)
 			return
 		}
 		user_id, err := user.GetUserId(c.Value)
 		if err != nil {
-			w.WriteHeader(http.StatusNotImplemented)
+			http.Redirect(w, r, r.Header.Get("Referer"), http.StatusNotImplemented)
 			log.Println(err)
 			return
 		}
-		post_id, err := strconv.Atoi(r.FormValue("Post_id"))
+		post_id, err := strconv.Atoi(r.URL.Path[len("/post/like/"):])
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
+			http.Redirect(w, r, r.Header.Get("Referer"), http.StatusBadRequest)
 			log.Println(err)
 			return
 		}
-		_, err = like.GET(post_id, user_id)
+		like.GET(post_id, user_id)
 
 		if post_id == like.Post_id && user_id == like.User_id {
 			err = like.DELETE(post_id, user_id)
 			if err != nil {
-				w.WriteHeader(http.StatusNotImplemented)
+				http.Redirect(w, r, r.Header.Get("Referer"), http.StatusNotImplemented)
 				log.Println(err)
 				return
 			}
 		} else {
 			_, err = like.CREATE(post_id, user_id)
 			if err != nil {
-				w.WriteHeader(http.StatusNotImplemented)
+				http.Redirect(w, r, r.Header.Get("Referer"), http.StatusNotImplemented)
 				log.Println(err)
 				return
 			}
 		}
 
 	}
+	http.Redirect(w, r, r.Header.Get("Referer"), http.StatusMethodNotAllowed)
+}
+
+func (*PostController) Comment(w http.ResponseWriter, r *http.Request) {
+	var user models.User
+	var user_id int
+	var commParams models.CommentParams
+	var comment models.Comment
+
+	if r.Method == http.MethodPost {
+		com := r.FormValue("Comment")
+		if com != "" {
+			post_id, err := strconv.Atoi(r.URL.Path[len("/post/comment/"):])
+			if err != nil {
+				http.Redirect(w, r, r.Header.Get("Referer"), http.StatusBadRequest)
+				log.Println(err)
+				return
+			}
+			c, err := r.Cookie("session_token")
+			if err == nil {
+				user_id, err = user.GetUserId(c.Value)
+				if err == nil {
+					commParams.Text = com
+					commParams.Post_id = post_id
+					commParams.User_id = user_id
+					_, err := comment.CREATE(commParams)
+					if err != nil {
+						http.Redirect(w, r, r.Header.Get("Referer"), http.StatusInternalServerError)
+						log.Println(err)
+						return
+					}
+				}
+			} else {
+				http.Redirect(w, r, r.Header.Get("Referer"), http.StatusUnauthorized)
+				log.Println(err)
+				return
+			}
+
+		} else {
+			http.Redirect(w, r, r.Header.Get("Referer"), http.StatusInternalServerError)
+			return
+		}
+	}
+	http.Redirect(w, r, r.Header.Get("Referer"), http.StatusMethodNotAllowed)
 }
 
 func GetInfo(w http.ResponseWriter, r *http.Request) allInfoCreate {

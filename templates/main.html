@@ -147,7 +147,7 @@
     <a href="/post/{{.Id}}">{{ .Title }}</a>
     <hr>
     <p>{{ .Content }}</p>
-    <form method="post">
+    <form action="/post/like/{{ .Id }}" method="post">
         {{.Like}}<input type="hidden" name="Post_id" value="{{.Id}}">
         <input type="submit" value="Like">
     </form>

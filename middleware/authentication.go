@@ -11,6 +11,7 @@ func Authentication(next http.Handler) http.Handler {
 		_, err := r.Cookie("session_token")
 
 		if err != nil {
+			r.Method = http.MethodGet
 			user.LogIn(w, r)
 		}
 		next.ServeHTTP(w, r)

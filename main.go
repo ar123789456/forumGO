@@ -33,6 +33,8 @@ func main() {
 	mux.HandleFunc("/", postH.GetAll)
 	mux.Handle("/post/", http.HandlerFunc(postH.GetSinglePost))
 	mux.Handle("/post/create", middleware.Authentication(http.HandlerFunc(postH.CreateNewPost)))
+	mux.Handle("/post/like/", middleware.Authentication(http.HandlerFunc(postH.LikePost)))
+	mux.Handle("/post/comment/", middleware.Authentication(http.HandlerFunc(postH.Comment)))
 	mux.HandleFunc("/tag/", postH.GetAllInTag)
 	mux.HandleFunc("/category/", postH.GetAllInCategory)
 	mux.HandleFunc("/login", userH.LogIn)

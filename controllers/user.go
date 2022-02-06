@@ -17,30 +17,27 @@ type UserController struct{}
 func (*UserController) LogIn(w http.ResponseWriter, r *http.Request) {
 	var user models.User
 	if r.Method == http.MethodGet {
-		err := config.Tmpl.ExecuteTemplate(w, "login.html", nil)
-		if err != nil {
-			fmt.Fprint(w, http.StatusInternalServerError)
-		}
-		return
+		ExecuteLogInTemplate(w, r)
 	}
 	nick := r.FormValue("Nickname")
 	if nick == "" {
 		log.Println("form Nickname empty")
-
-		fmt.Fprint(w, http.StatusBadRequest)
+		w.WriteHeader(http.StatusBadRequest)
+		ExecuteLogInTemplate(w, r)
 		return
 	}
 	_, err := user.FETCH(nick)
 	if err != nil {
 		log.Println("User not find:", err)
-		fmt.Fprint(w, http.StatusBadRequest)
+		w.WriteHeader(http.StatusBadRequest)
+		ExecuteLogInTemplate(w, r)
 		return
 	}
 	passW := r.FormValue("Password")
 	if passW == "" {
 		log.Println("form Password empty")
-		fmt.Fprint(w, http.StatusBadRequest)
-
+		w.WriteHeader(http.StatusBadRequest)
+		ExecuteLogInTemplate(w, r)
 		return
 	}
 	logIn := CheckPasswordHash(passW, user.Password)
@@ -48,7 +45,8 @@ func (*UserController) LogIn(w http.ResponseWriter, r *http.Request) {
 		value := uuid.NewV1().String()
 		_, err = user.UPDATEuid(value, user.Id)
 		if err != nil {
-			log.Println(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			ExecuteLogInTemplate(w, r)
 			return
 		}
 		cookie := &http.Cookie{
@@ -58,15 +56,20 @@ func (*UserController) LogIn(w http.ResponseWriter, r *http.Request) {
 		}
 		r.AddCookie(cookie)
 		http.SetCookie(w, cookie)
-		err = config.Tmpl.ExecuteTemplate(w, "login.html", nil)
-		if err != nil {
-			log.Println(err)
-			fmt.Fprint(w, err)
-		}
+		w.WriteHeader(http.StatusBadRequest)
+		ExecuteLogInTemplate(w, r)
 		return
 	}
 	log.Println("unvalid Password")
-	fmt.Fprint(w, http.StatusBadRequest)
+	w.WriteHeader(http.StatusBadRequest)
+	ExecuteLogInTemplate(w, r)
+}
+
+func ExecuteLogInTemplate(w http.ResponseWriter, r *http.Request) {
+	err := config.Tmpl.ExecuteTemplate(w, "login.html", nil)
+	if err != nil {
+		fmt.Fprint(w, http.StatusInternalServerError)
+	}
 }
 
 func (*UserController) Registration(w http.ResponseWriter, r *http.Request) {

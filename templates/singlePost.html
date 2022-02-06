@@ -155,7 +155,7 @@
             <p>{{.Text}}</p>
         </div>
         {{end}}
-        <form method="post">
+        <form action="/post/comment/{{.Post.Title}}" method="post">
             <h3>Add comment:</h3>
             <textarea name="Comment" cols="30" rows="10"></textarea>
             <button type="submit">add</button>
