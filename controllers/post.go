@@ -340,7 +340,9 @@ func (*PostController) DELETE(w http.ResponseWriter, r *http.Request) {
 
 func (*PostController) LikePost(w http.ResponseWriter, r *http.Request) {
 	var like models.Like
-	var user models.User
+	// var user models.User
+	var userSession models.UserSession
+
 	fmt.Println(r.Header.Get("Referer"))
 
 	if r.Method == http.MethodPost {
@@ -351,7 +353,7 @@ func (*PostController) LikePost(w http.ResponseWriter, r *http.Request) {
 			log.Println(err)
 			return
 		}
-		user_id, err := user.GetUserId(c.Value)
+		user_id, err := userSession.GetUserId(c.Value)
 		if err != nil {
 			http.Redirect(w, r, r.Header.Get("Referer"), http.StatusNotImplemented)
 			log.Println(err)
@@ -386,7 +388,8 @@ func (*PostController) LikePost(w http.ResponseWriter, r *http.Request) {
 }
 
 func (*PostController) Comment(w http.ResponseWriter, r *http.Request) {
-	var user models.User
+	// var user models.User
+	var userSession models.UserSession
 	var user_id int
 	var commParams models.CommentParams
 	var comment models.Comment
@@ -402,7 +405,7 @@ func (*PostController) Comment(w http.ResponseWriter, r *http.Request) {
 			}
 			c, err := r.Cookie("session_token")
 			if err == nil {
-				user_id, err = user.GetUserId(c.Value)
+				user_id, err = userSession.GetUserId(c.Value)
 				if err == nil {
 					commParams.Text = com
 					commParams.Post_id = post_id

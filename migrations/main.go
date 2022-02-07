@@ -16,6 +16,7 @@ func Run() {
 	migrate(config.DB, LikePost)
 	migrate(config.DB, CategoryPost)
 	migrate(config.DB, TagPosts)
+	migrate(config.DB, UserSession)
 }
 
 func migrate(dbDriver *sql.DB, query string) {

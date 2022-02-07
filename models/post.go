@@ -36,15 +36,16 @@ func (param *PostParam) Parse(r *http.Request) error {
 
 func (post *Post) CREATE(userInput PostParam) (*Post, error) {
 	statement, _ := config.DB.Prepare("INSERT INTO posts(title, content, create_at, update_at, id_user) VALUES(?, ?, ?, ?, ?);")
-	time := time.Now().String()
-	result, err := statement.Exec(userInput.Title, userInput.Content, time, time, userInput.User_id)
+	timeNow := time.Now().Format(TimeFormat)
+
+	result, err := statement.Exec(userInput.Title, userInput.Content, timeNow, timeNow, userInput.User_id)
 	if err == nil {
 		id, _ := result.LastInsertId()
 		post.Id = int(id)
 		post.Content = userInput.Content
 		post.Title = userInput.Title
-		post.Creat_at = time
-		post.Update_to = time
+		post.Creat_at = timeNow
+		post.Update_to = timeNow
 		post.User_id = userInput.User_id
 		return post, err
 	}

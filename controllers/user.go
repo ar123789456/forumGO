@@ -16,8 +16,10 @@ type UserController struct{}
 
 func (*UserController) LogIn(w http.ResponseWriter, r *http.Request) {
 	var user models.User
+	var userSession models.UserSession
 	if r.Method == http.MethodGet {
 		ExecuteLogInTemplate(w, r)
+		return
 	}
 	nick := r.FormValue("Nickname")
 	if nick == "" {
@@ -43,7 +45,7 @@ func (*UserController) LogIn(w http.ResponseWriter, r *http.Request) {
 	logIn := CheckPasswordHash(passW, user.Password)
 	if logIn {
 		value := uuid.NewV1().String()
-		_, err = user.UPDATEuid(value, user.Id)
+		_, err = userSession.CREATE(value, user.Id)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			ExecuteLogInTemplate(w, r)
@@ -120,6 +122,8 @@ func (*UserController) Registration(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, http.StatusBadRequest)
 		return
 	}
+	r.Method = http.MethodGet
+	http.Redirect(w, r, "/login", http.StatusOK)
 }
 
 func HashPassword(password string) (string, error) {
