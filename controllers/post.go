@@ -83,11 +83,14 @@ func (*PostController) GetAllInTag(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for i, post := range allPosts {
-		allPosts[i].Like, err = like.GETSCORE(post.Id)
+		allPosts[i].Like, err = like.GETSCORELIKE(post.Id)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 		}
-
+		allPosts[i].Dislike, err = like.GETSCOREDISLIKE(post.Id)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+		}
 	}
 
 	allTag, err := tags.GETALL()
@@ -142,11 +145,14 @@ func (*PostController) GetAllInCategory(w http.ResponseWriter, r *http.Request) 
 	}
 
 	for i, post := range allPosts {
-		allPosts[i].Like, err = like.GETSCORE(post.Id)
+		allPosts[i].Like, err = like.GETSCORELIKE(post.Id)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 		}
-
+		allPosts[i].Dislike, err = like.GETSCOREDISLIKE(post.Id)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+		}
 	}
 
 	allTag, err := tags.GETALL()
@@ -204,7 +210,11 @@ func (*PostController) GetSinglePost(w http.ResponseWriter, r *http.Request) {
 
 	if err == nil {
 		var err1 error
-		post.Like, err1 = like.GETSCORE(post_id)
+		post.Like, err1 = like.GETSCORELIKE(post_id)
+		if err1 != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+		}
+		post.Dislike, err1 = like.GETSCOREDISLIKE(post_id)
 		if err1 != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 		}
@@ -223,7 +233,7 @@ func (*PostController) GetSinglePost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for i, comment := range allComment {
-		allComment[i].Like, err = likeCom.GETSCORE(comment.ID)
+		allComment[i].Like, err = likeCom.GETSCORELIKE(comment.ID)
 		if err != nil {
 			log.Println(err)
 		}
@@ -261,11 +271,14 @@ func (*PostController) GetAll(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for i, post := range allPosts {
-		allPosts[i].Like, err = like.GETSCORE(post.Id)
+		allPosts[i].Like, err = like.GETSCORELIKE(post.Id)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 		}
-
+		allPosts[i].Dislike, err = like.GETSCOREDISLIKE(post.Id)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+		}
 	}
 
 	allTag, err := tags.GETALL()
@@ -391,6 +404,7 @@ func (*PostController) LikePost(w http.ResponseWriter, r *http.Request) {
 			log.Println(err)
 			return
 		}
+
 		like.GET(post_id, user_id)
 
 		if post_id == like.Post_id && user_id == like.User_id {
@@ -401,8 +415,88 @@ func (*PostController) LikePost(w http.ResponseWriter, r *http.Request) {
 				log.Println(err)
 				return
 			}
+			if like.Liked != models.LikeTRUE {
+				_, err = like.CREATE(post_id, user_id)
+				if err != nil {
+					http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
+					w.WriteHeader(http.StatusInternalServerError)
+					log.Println(err)
+					return
+				}
+			}
 		} else {
 			_, err = like.CREATE(post_id, user_id)
+			if err != nil {
+				http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
+				w.WriteHeader(http.StatusInternalServerError)
+				log.Println(err)
+				return
+			}
+		}
+		http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+	http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
+	w.WriteHeader(http.StatusMethodNotAllowed)
+}
+
+func (*PostController) DisLikePost(w http.ResponseWriter, r *http.Request) {
+	var like models.Like
+	// var user models.User
+	var userSession models.UserSession
+
+	if r.URL.Path[len("/post/dislike/"):] == "" || r.Method != http.MethodPost {
+		fmt.Fprint(w, http.StatusMethodNotAllowed)
+		return
+	}
+
+	fmt.Println(r.Header.Get("Referer"))
+
+	if r.Method == http.MethodPost {
+		//Check Session cookie
+		c, err := r.Cookie("session_token")
+		if err != nil {
+			http.Redirect(w, r, "/login", http.StatusSeeOther)
+			w.WriteHeader(http.StatusUnauthorized)
+			log.Println(err)
+			return
+		}
+		user_id, err := userSession.GetUserId(c.Value)
+		if err != nil {
+			http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
+			w.WriteHeader(http.StatusUnauthorized)
+			log.Println(err)
+			return
+		}
+		post_id, err := strconv.Atoi(r.URL.Path[len("/post/dislike/"):])
+		if err != nil {
+			http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
+			w.WriteHeader(http.StatusBadRequest)
+			log.Println(err)
+			return
+		}
+		like.GET(post_id, user_id)
+
+		if post_id == like.Post_id && user_id == like.User_id {
+			err = like.DELETE(post_id, user_id)
+			if err != nil {
+				http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
+				w.WriteHeader(http.StatusInternalServerError)
+				log.Println(err)
+				return
+			}
+			if like.Liked != models.Dislike {
+				_, err = like.CREATEDISLIKE(post_id, user_id)
+				if err != nil {
+					http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
+					w.WriteHeader(http.StatusInternalServerError)
+					log.Println(err)
+					return
+				}
+			}
+		} else {
+			_, err = like.CREATEDISLIKE(post_id, user_id)
 			if err != nil {
 				http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
 				w.WriteHeader(http.StatusInternalServerError)
@@ -463,8 +557,88 @@ func (*PostController) LikeComment(w http.ResponseWriter, r *http.Request) {
 				log.Println(err)
 				return
 			}
+			if like.Liked != models.LikeTRUE {
+				_, err = like.CREATE(post_id, user_id)
+				if err != nil {
+					http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
+					w.WriteHeader(http.StatusInternalServerError)
+					log.Println(err)
+					return
+				}
+			}
 		} else {
 			_, err = like.CREATE(post_id, user_id)
+			if err != nil {
+				http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
+				w.WriteHeader(http.StatusInternalServerError)
+				log.Println(err)
+				return
+			}
+		}
+		http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+	http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
+	w.WriteHeader(http.StatusMethodNotAllowed)
+}
+
+func (*PostController) DisLikeComment(w http.ResponseWriter, r *http.Request) {
+	var like models.LikeComment
+	// var user models.User
+	var userSession models.UserSession
+
+	if r.URL.Path[len("/comment/dislike/"):] == "" || r.Method != http.MethodPost {
+		fmt.Fprint(w, http.StatusMethodNotAllowed)
+		return
+	}
+
+	fmt.Println(r.Header.Get("Referer"))
+
+	if r.Method == http.MethodPost {
+		//Check Session cookie
+		c, err := r.Cookie("session_token")
+		if err != nil {
+			http.Redirect(w, r, "/login", http.StatusSeeOther)
+			w.WriteHeader(http.StatusUnauthorized)
+			log.Println(err)
+			return
+		}
+		user_id, err := userSession.GetUserId(c.Value)
+		if err != nil {
+			http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
+			w.WriteHeader(http.StatusUnauthorized)
+			log.Println(err)
+			return
+		}
+		post_id, err := strconv.Atoi(r.URL.Path[len("/comment/dislike/"):])
+		if err != nil {
+			http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
+			w.WriteHeader(http.StatusBadRequest)
+			log.Println(err)
+			return
+		}
+		like.GET(post_id, user_id)
+
+		if post_id == like.Comment_id && user_id == like.User_id {
+			err = like.DELETE(post_id, user_id)
+			if err != nil {
+				http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
+				w.WriteHeader(http.StatusInternalServerError)
+				log.Println(err)
+				return
+			}
+			if like.Liked != models.Dislike {
+				_, err = like.CREATEDISLIKE(post_id, user_id)
+				if err != nil {
+					http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
+					w.WriteHeader(http.StatusInternalServerError)
+					log.Println(err)
+					return
+				}
+			}
+		} else {
+			_, err = like.CREATEDISLIKE(post_id, user_id)
 			if err != nil {
 				http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
 				w.WriteHeader(http.StatusInternalServerError)

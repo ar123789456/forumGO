@@ -15,6 +15,7 @@ type Post struct {
 	Update_to string `json:"update_to"`
 	User_id   int    `json:"user_id"`
 	Like      int    `json:"like"`
+	Dislike   int    `json:"dislike"`
 }
 
 type PostParam struct {

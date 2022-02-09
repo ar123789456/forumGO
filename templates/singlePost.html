@@ -161,6 +161,10 @@
               {{.Like}}<input type="hidden" name="Post_id" value="{{.ID}}">
               <input type="submit" value="Like">
           </form>
+          <form action="/comment/dislike/{{ .ID }}" method="post">
+            {{.Dislike}}<input type="hidden" name="Post_id" value="{{.ID}}">
+            <input type="submit" value="Dislike">
+        </form>
         </div>
         {{end}}
         <form action="/post/comment/{{.Post.Id}}" method="post">
