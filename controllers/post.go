@@ -186,6 +186,8 @@ func (*PostController) GetAllInCategory(w http.ResponseWriter, r *http.Request) 
 
 func (*PostController) GetSinglePost(w http.ResponseWriter, r *http.Request) {
 	var post models.Post
+	var like models.Like
+	var likeCom models.LikeComment
 	var comment models.Comment
 	var post_id int
 
@@ -200,6 +202,14 @@ func (*PostController) GetSinglePost(w http.ResponseWriter, r *http.Request) {
 
 	_, err := post.GET(post_id)
 
+	if err == nil {
+		var err1 error
+		post.Like, err1 = like.GETSCORE(post_id)
+		if err1 != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+		}
+	}
+
 	if err != nil {
 		log.Println("Controller/Post GET:", err)
 		fmt.Fprint(w, http.StatusInternalServerError)
@@ -210,6 +220,14 @@ func (*PostController) GetSinglePost(w http.ResponseWriter, r *http.Request) {
 
 	if err == nil {
 		w.WriteHeader(http.StatusInternalServerError)
+	}
+
+	for i, comment := range allComment {
+		allComment[i].Like, err = likeCom.GETSCORE(comment.ID)
+		if err != nil {
+			log.Println(err)
+		}
+
 	}
 
 	var allInfo struct {
@@ -343,25 +361,33 @@ func (*PostController) LikePost(w http.ResponseWriter, r *http.Request) {
 	// var user models.User
 	var userSession models.UserSession
 
+	if r.URL.Path[len("/post/like/"):] == "" || r.Method != http.MethodPost {
+		fmt.Fprint(w, http.StatusMethodNotAllowed)
+		return
+	}
+
 	fmt.Println(r.Header.Get("Referer"))
 
 	if r.Method == http.MethodPost {
 		//Check Session cookie
 		c, err := r.Cookie("session_token")
 		if err != nil {
-			http.Redirect(w, r, "/login", http.StatusUnauthorized)
+			http.Redirect(w, r, "/login", http.StatusSeeOther)
+			w.WriteHeader(http.StatusUnauthorized)
 			log.Println(err)
 			return
 		}
 		user_id, err := userSession.GetUserId(c.Value)
 		if err != nil {
-			http.Redirect(w, r, r.Header.Get("Referer"), http.StatusNotImplemented)
+			http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
+			w.WriteHeader(http.StatusUnauthorized)
 			log.Println(err)
 			return
 		}
 		post_id, err := strconv.Atoi(r.URL.Path[len("/post/like/"):])
 		if err != nil {
-			http.Redirect(w, r, r.Header.Get("Referer"), http.StatusBadRequest)
+			http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
+			w.WriteHeader(http.StatusBadRequest)
 			log.Println(err)
 			return
 		}
@@ -370,21 +396,88 @@ func (*PostController) LikePost(w http.ResponseWriter, r *http.Request) {
 		if post_id == like.Post_id && user_id == like.User_id {
 			err = like.DELETE(post_id, user_id)
 			if err != nil {
-				http.Redirect(w, r, r.Header.Get("Referer"), http.StatusNotImplemented)
+				http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
+				w.WriteHeader(http.StatusInternalServerError)
 				log.Println(err)
 				return
 			}
 		} else {
 			_, err = like.CREATE(post_id, user_id)
 			if err != nil {
-				http.Redirect(w, r, r.Header.Get("Referer"), http.StatusNotImplemented)
+				http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
+				w.WriteHeader(http.StatusInternalServerError)
 				log.Println(err)
 				return
 			}
 		}
-
+		http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
+		w.WriteHeader(http.StatusOK)
+		return
 	}
-	http.Redirect(w, r, r.Header.Get("Referer"), http.StatusMethodNotAllowed)
+	http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
+	w.WriteHeader(http.StatusMethodNotAllowed)
+}
+
+func (*PostController) LikeComment(w http.ResponseWriter, r *http.Request) {
+	var like models.LikeComment
+	// var user models.User
+	var userSession models.UserSession
+
+	if r.URL.Path[len("/comment/like/"):] == "" || r.Method != http.MethodPost {
+		fmt.Fprint(w, http.StatusMethodNotAllowed)
+		return
+	}
+
+	fmt.Println(r.Header.Get("Referer"))
+
+	if r.Method == http.MethodPost {
+		//Check Session cookie
+		c, err := r.Cookie("session_token")
+		if err != nil {
+			http.Redirect(w, r, "/login", http.StatusSeeOther)
+			w.WriteHeader(http.StatusUnauthorized)
+			log.Println(err)
+			return
+		}
+		user_id, err := userSession.GetUserId(c.Value)
+		if err != nil {
+			http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
+			w.WriteHeader(http.StatusUnauthorized)
+			log.Println(err)
+			return
+		}
+		post_id, err := strconv.Atoi(r.URL.Path[len("/comment/like/"):])
+		if err != nil {
+			http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
+			w.WriteHeader(http.StatusBadRequest)
+			log.Println(err)
+			return
+		}
+		like.GET(post_id, user_id)
+
+		if post_id == like.Comment_id && user_id == like.User_id {
+			err = like.DELETE(post_id, user_id)
+			if err != nil {
+				http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
+				w.WriteHeader(http.StatusInternalServerError)
+				log.Println(err)
+				return
+			}
+		} else {
+			_, err = like.CREATE(post_id, user_id)
+			if err != nil {
+				http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
+				w.WriteHeader(http.StatusInternalServerError)
+				log.Println(err)
+				return
+			}
+		}
+		http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+	http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
+	w.WriteHeader(http.StatusMethodNotAllowed)
 }
 
 func (*PostController) Comment(w http.ResponseWriter, r *http.Request) {
@@ -399,7 +492,9 @@ func (*PostController) Comment(w http.ResponseWriter, r *http.Request) {
 		if com != "" {
 			post_id, err := strconv.Atoi(r.URL.Path[len("/post/comment/"):])
 			if err != nil {
-				http.Redirect(w, r, r.Header.Get("Referer"), http.StatusBadRequest)
+				w.WriteHeader(http.StatusBadRequest)
+				http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
+
 				log.Println(err)
 				return
 			}
@@ -412,23 +507,30 @@ func (*PostController) Comment(w http.ResponseWriter, r *http.Request) {
 					commParams.User_id = user_id
 					_, err := comment.CREATE(commParams)
 					if err != nil {
-						http.Redirect(w, r, r.Header.Get("Referer"), http.StatusInternalServerError)
+						http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
+						w.WriteHeader(http.StatusOK)
 						log.Println(err)
 						return
 					}
 				}
 			} else {
-				http.Redirect(w, r, r.Header.Get("Referer"), http.StatusUnauthorized)
+				http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
+				w.WriteHeader(http.StatusUnauthorized)
 				log.Println(err)
 				return
 			}
 
 		} else {
-			http.Redirect(w, r, r.Header.Get("Referer"), http.StatusInternalServerError)
+			http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
+			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
+
+		http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
+		return
 	}
-	http.Redirect(w, r, r.Header.Get("Referer"), http.StatusMethodNotAllowed)
+	w.WriteHeader(http.StatusMethodNotAllowed)
+	http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
 }
 
 func GetInfo(w http.ResponseWriter, r *http.Request) allInfoCreate {

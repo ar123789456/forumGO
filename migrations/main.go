@@ -14,6 +14,7 @@ func Run() {
 	migrate(config.DB, Tags)
 	migrate(config.DB, Comments)
 	migrate(config.DB, LikePost)
+	migrate(config.DB, LikeComment)
 	migrate(config.DB, CategoryPost)
 	migrate(config.DB, TagPosts)
 	migrate(config.DB, UserSession)

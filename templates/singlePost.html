@@ -148,14 +148,22 @@
         <hr>
         <p>{{.Post.Content}}</p>
         <hr>
+        <form action="/post/like/{{ .Post.Id }}" method="post">
+          {{.Post.Like}}<input type="hidden" name="Post_id" value="{{.Post.Id}}">
+          <input type="submit" value="Like">
+      </form>
         {{range .AllComment}}
         <div>
             
             <h4>{{.User}}</h4>
             <p>{{.Text}}</p>
+            <form action="/comment/like/{{ .ID }}" method="post">
+              {{.Like}}<input type="hidden" name="Post_id" value="{{.ID}}">
+              <input type="submit" value="Like">
+          </form>
         </div>
         {{end}}
-        <form action="/post/comment/{{.Post.Title}}" method="post">
+        <form action="/post/comment/{{.Post.Id}}" method="post">
             <h3>Add comment:</h3>
             <textarea name="Comment" cols="30" rows="10"></textarea>
             <button type="submit">add</button>

@@ -58,8 +58,8 @@ func (*UserController) LogIn(w http.ResponseWriter, r *http.Request) {
 		}
 		r.AddCookie(cookie)
 		http.SetCookie(w, cookie)
+		http.Redirect(w, r, "/", http.StatusSeeOther)
 		w.WriteHeader(http.StatusBadRequest)
-		ExecuteLogInTemplate(w, r)
 		return
 	}
 	log.Println("unvalid Password")
@@ -123,7 +123,8 @@ func (*UserController) Registration(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	r.Method = http.MethodGet
-	http.Redirect(w, r, "/login", http.StatusOK)
+	http.Redirect(w, r, "/login", http.StatusSeeOther)
+	w.WriteHeader(http.StatusOK)
 }
 
 func HashPassword(password string) (string, error) {

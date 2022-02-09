@@ -11,6 +11,7 @@ type Comment struct {
 	User    string `json:"user"`
 	User_id int    `json:"user_id"`
 	Post_id int    `json:"post_id"`
+	Like    int
 }
 
 type CommentParams struct {
@@ -62,22 +63,3 @@ func (comment *Comment) GET(id int) ([]Comment, error) {
 
 	return comments, err
 }
-
-// rows, err := config.DB.Query("SELECT * FROM posts")
-// var posts []Post
-// if err == nil {
-// 	for rows.Next() {
-// 		var currentPost Post
-// 		rows.Scan(
-// 			&currentPost.Id,
-// 			&currentPost.Title,
-// 			&currentPost.Content,
-// 			&currentPost.Creat_at,
-// 			&currentPost.Update_to,
-// 			&currentPost.User_id,
-// 		)
-// 		posts = append(posts, currentPost)
-// 	}
-// 	return posts, err
-// }
-// return posts, err
