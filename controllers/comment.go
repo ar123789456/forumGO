@@ -178,7 +178,6 @@ func (*PostController) Comment(w http.ResponseWriter, r *http.Request) {
 					_, err := comment.CREATE(commParams)
 					if err != nil {
 						http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
-						w.WriteHeader(http.StatusOK)
 						log.Println(err)
 						return
 					}

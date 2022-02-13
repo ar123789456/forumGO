@@ -9,11 +9,6 @@ import (
 	"strconv"
 )
 
-type allInfoCreate struct {
-	Tag      []models.Tag
-	Category []models.Category
-}
-
 func (*PostController) CreateNewPost(w http.ResponseWriter, r *http.Request) {
 	var params models.PostParam
 	var post models.Post
@@ -305,6 +300,8 @@ func GetInfo(w http.ResponseWriter, r *http.Request) allInfoCreate {
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
+
+	baseSite.User = UAuth(r)
 
 	return baseSite
 }

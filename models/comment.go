@@ -12,6 +12,7 @@ type Comment struct {
 	User_id int    `json:"user_id"`
 	Post_id int    `json:"post_id"`
 	Like    int
+	Dislike int
 }
 
 type CommentParams struct {

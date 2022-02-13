@@ -12,8 +12,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type UserController struct{}
-
 func (*UserController) LogIn(w http.ResponseWriter, r *http.Request) {
 	var user models.User
 	var userSession models.UserSession
@@ -65,6 +63,32 @@ func (*UserController) LogIn(w http.ResponseWriter, r *http.Request) {
 	log.Println("unvalid Password")
 	w.WriteHeader(http.StatusBadRequest)
 	ExecuteLogInTemplate(w, r)
+}
+
+func (*UserController) LogOut(w http.ResponseWriter, r *http.Request) {
+	var userSession models.UserSession
+
+	c, err := r.Cookie("session_token")
+	if err != nil {
+		r.Method = http.MethodGet
+		http.Redirect(w, r, "/login", http.StatusUnauthorized)
+		return
+	}
+
+	err = userSession.DELETE(c.Value)
+	if err != nil {
+		http.Error(w, "500 Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	cookie := &http.Cookie{
+		Name:   "session_token",
+		Value:  "",
+		Path:   "/",
+		MaxAge: -1,
+	}
+	http.SetCookie(w, cookie)
+	http.Redirect(w, r, "/login", http.StatusSeeOther)
 }
 
 func ExecuteLogInTemplate(w http.ResponseWriter, r *http.Request) {

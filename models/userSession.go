@@ -33,6 +33,12 @@ func (userSession *UserSession) GET(UID string) (*UserSession, error) {
 	return userSession, err
 }
 
+func (userSession *UserSession) DELETE(UID string) error {
+	statement, _ := config.DB.Prepare("SELECT uid, user_id, extime FROM user_session WHERE uid=?")
+	_, err := statement.Exec(UID)
+	return err
+}
+
 func (userSession *UserSession) GetUserId(UID string) (int, error) {
 	err := config.DB.QueryRow(
 		"SELECT uid, user_id, extime FROM user_session WHERE UID=?", UID).Scan(

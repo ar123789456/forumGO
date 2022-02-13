@@ -36,6 +36,7 @@ func main() {
 	mux.Handle("/post/comment/", middleware.Authentication(http.HandlerFunc(postH.Comment)))
 	mux.Handle("/comment/like/", middleware.Authentication(http.HandlerFunc(postH.LikeComment)))
 	mux.Handle("/comment/dislike/", middleware.Authentication(http.HandlerFunc(postH.DisLikeComment)))
+	mux.Handle("/logout", middleware.Authentication(http.HandlerFunc(userH.LogOut)))
 
 	mux.HandleFunc("/user/", postH.GetAllUserPost)
 	mux.HandleFunc("/post/", postH.GetSinglePost)
