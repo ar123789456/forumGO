@@ -122,9 +122,13 @@
             </div>
           </div> 
         <div class="header-right">
-            <a href="/registration">Registration</a>
-            <a href="/post/create">Create Post</a>
-            <a href="/login">login</a>
+          {{ if .User }}
+          <a href="/user/{{ .UserInfo.Id }}">{{ .UserInfo.Nickname }}</a>
+          <a href="/logout">logout</a>
+          {{ else }}
+          <a href="/registration">Registration</a>
+          <a href="/login">login</a>
+          {{ end }}
         </div>
       </div>
 
@@ -144,6 +148,8 @@
     <div>
         <h3>{{.Post.Title}}</h3>
         <hr>
+        <a href="/user/{{ .UserInfo.Id }}">{{ .UserInfo.Nickname }}</a>
+        <hr>
         Create time: {{.Post.Creat_at}}
         <hr>
         <p>{{.Post.Content}}</p>
@@ -152,6 +158,10 @@
           {{.Post.Like}}<input type="hidden" name="Post_id" value="{{.Post.Id}}">
           <input type="submit" value="Like">
       </form>
+      <form action="/post/dislike/{{ .Post.Id }}" method="post">
+        {{.Post.Dislike}}<input type="hidden" name="Post_id" value="{{.Post.Id}}">
+        <input type="submit" value="Dislike">
+    </form>
         {{range .AllComment}}
         <div>
             

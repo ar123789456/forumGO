@@ -122,9 +122,13 @@
             </div>
           </div> 
         <div class="header-right">
-            <a href="/registration">Registration</a>
-            <a href="/post/create">Create Post</a>
-            <a href="/login">login</a>
+          {{ if .User }}
+          <a href="/user/{{ .UserInfo.Id }}">{{ .UserInfo.Nickname }}</a>
+          <a href="/logout">logout</a>
+          {{ else }}
+          <a href="/registration">Registration</a>
+          <a href="/login">login</a>
+          {{ end }}
         </div>
       </div>
 
