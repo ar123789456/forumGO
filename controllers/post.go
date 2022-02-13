@@ -9,8 +9,6 @@ import (
 	"strconv"
 )
 
-type PostController struct{}
-
 type allInfoCreate struct {
 	Tag      []models.Tag
 	Category []models.Category
@@ -25,13 +23,29 @@ func (*PostController) CreateNewPost(w http.ResponseWriter, r *http.Request) {
 	var categoryPost models.CategoryPost
 	var err error
 
+	var userSession models.UserSession
+
 	if r.Method == http.MethodGet {
 		baseSite := GetInfo(w, r)
 		config.Tmpl.ExecuteTemplate(w, "addPost.html", baseSite)
 		return
 	}
 
-	err = params.Parse(r)
+	c, err := r.Cookie("session_token")
+	if err != nil {
+		r.Method = http.MethodGet
+		http.Redirect(w, r, "/login", http.StatusUnauthorized)
+		return
+	}
+
+	_, err = userSession.GET(c.Value)
+	if err != nil {
+		r.Method = http.MethodGet
+		http.Redirect(w, r, "/login", http.StatusUnauthorized)
+		return
+	}
+
+	err = params.Parse(r, userSession.User_id)
 	if err != nil {
 		log.Println("Controller/ dont pars postParam", err)
 		return
@@ -65,261 +79,26 @@ func (*PostController) CreateNewPost(w http.ResponseWriter, r *http.Request) {
 	config.Tmpl.ExecuteTemplate(w, "addPost.html", nil)
 }
 
-func (*PostController) GetAllInTag(w http.ResponseWriter, r *http.Request) {
-	var posts models.Post
-	var like models.Like
-	var tags models.Tag
-	var categories models.Category
-
-	tag := r.URL.Path[len("/tag/"):]
-
-	allPosts, err := posts.GETALLINTAG(tag)
-
-	if err != nil {
-		log.Println("Controller/Post:", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprint(w, http.StatusInternalServerError)
-		return
-	}
-
-	for i, post := range allPosts {
-		allPosts[i].Like, err = like.GETSCORELIKE(post.Id)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-		}
-		allPosts[i].Dislike, err = like.GETSCOREDISLIKE(post.Id)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-		}
-	}
-
-	allTag, err := tags.GETALL()
-
-	if err != nil {
-		log.Println("Controller/Post:", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprint(w, http.StatusInternalServerError)
-		return
-	}
-
-	allCategory, err := categories.GETALL()
-
-	if err != nil {
-		log.Println("Controller/Post:", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprint(w, http.StatusInternalServerError)
-		return
-	}
-
-	var allInfo struct {
-		Allpost     []models.Post
-		Alltag      []models.Tag
-		Allcategory []models.Category
-	}
-	allInfo.Allpost = allPosts
-	allInfo.Alltag = allTag
-	allInfo.Allcategory = allCategory
-
-	err = config.Tmpl.ExecuteTemplate(w, "main.html", allInfo)
-
-	if err != nil {
-		log.Println("Controller/Post:", err)
-		fmt.Fprint(w, http.StatusInternalServerError)
-	}
-}
-
-func (*PostController) GetAllInCategory(w http.ResponseWriter, r *http.Request) {
-	var posts models.Post
-	var like models.Like
-	var tags models.Tag
-	var categories models.Category
-
-	category := r.URL.Path[len("/category/"):]
-
-	allPosts, err := posts.GETALLINCATEGORY(category)
-
-	if err != nil {
-		log.Println("Controller/Post:", err)
-		fmt.Fprint(w, http.StatusInternalServerError)
-		return
-	}
-
-	for i, post := range allPosts {
-		allPosts[i].Like, err = like.GETSCORELIKE(post.Id)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-		}
-		allPosts[i].Dislike, err = like.GETSCOREDISLIKE(post.Id)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-		}
-	}
-
-	allTag, err := tags.GETALL()
-
-	if err != nil {
-		log.Println("Controller/Post:", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprint(w, http.StatusInternalServerError)
-		return
-	}
-
-	allCategory, err := categories.GETALL()
-
-	if err != nil {
-		log.Println("Controller/Post:", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprint(w, http.StatusInternalServerError)
-		return
-	}
-
-	var allInfo struct {
-		Allpost     []models.Post
-		Alltag      []models.Tag
-		Allcategory []models.Category
-	}
-	allInfo.Allpost = allPosts
-	allInfo.Alltag = allTag
-	allInfo.Allcategory = allCategory
-
-	err = config.Tmpl.ExecuteTemplate(w, "main.html", allInfo)
-
-	if err != nil {
-		log.Println("Controller/Post:", err)
-		fmt.Fprint(w, http.StatusInternalServerError)
-	}
-}
-
-func (*PostController) GetSinglePost(w http.ResponseWriter, r *http.Request) {
-	var post models.Post
-	var like models.Like
-	var likeCom models.LikeComment
-	var comment models.Comment
-	var post_id int
-
-	if r.URL.Path[6:] != "" {
-		var err error
-		post_id, err = strconv.Atoi(r.URL.Path[6:])
-		if err != nil {
-			http.NotFound(w, r)
-			return
-		}
-	}
-
-	_, err := post.GET(post_id)
-
-	if err == nil {
-		var err1 error
-		post.Like, err1 = like.GETSCORELIKE(post_id)
-		if err1 != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-		}
-		post.Dislike, err1 = like.GETSCOREDISLIKE(post_id)
-		if err1 != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-		}
-	}
-
-	if err != nil {
-		log.Println("Controller/Post GET:", err)
-		fmt.Fprint(w, http.StatusInternalServerError)
-		return
-	}
-
-	allComment, err := comment.GET(post_id)
-
-	if err == nil {
-		w.WriteHeader(http.StatusInternalServerError)
-	}
-
-	for i, comment := range allComment {
-		allComment[i].Like, err = likeCom.GETSCORELIKE(comment.ID)
-		if err != nil {
-			log.Println(err)
-		}
-
-	}
-
-	var allInfo struct {
-		AllComment []models.Comment
-		Post       models.Post
-		BaseSite   allInfoCreate
-	}
-	allInfo.AllComment = allComment
-	allInfo.Post = post
-	allInfo.BaseSite = GetInfo(w, r)
-
-	err = config.Tmpl.ExecuteTemplate(w, "singlePost.html", allInfo)
-
-	if err != nil {
-		log.Println("Controller/Post:", err)
-		fmt.Fprint(w, http.StatusInternalServerError)
-	}
-}
-
-func (*PostController) GetAll(w http.ResponseWriter, r *http.Request) {
-	var posts models.Post
-	var like models.Like
-	var tags models.Tag
-	var categories models.Category
-	allPosts, err := posts.GETALL()
-
-	if err != nil {
-		log.Println("Controller/Post:", err)
-		fmt.Fprint(w, http.StatusInternalServerError)
-		return
-	}
-
-	for i, post := range allPosts {
-		allPosts[i].Like, err = like.GETSCORELIKE(post.Id)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-		}
-		allPosts[i].Dislike, err = like.GETSCOREDISLIKE(post.Id)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-		}
-	}
-
-	allTag, err := tags.GETALL()
-
-	if err != nil {
-		log.Println("Controller/Post:", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprint(w, http.StatusInternalServerError)
-		return
-	}
-
-	allCategory, err := categories.GETALL()
-
-	if err != nil {
-		log.Println("Controller/Post:", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprint(w, http.StatusInternalServerError)
-		return
-	}
-
-	var allInfo struct {
-		Allpost     []models.Post
-		Alltag      []models.Tag
-		Allcategory []models.Category
-	}
-	allInfo.Allpost = allPosts
-	allInfo.Alltag = allTag
-	allInfo.Allcategory = allCategory
-
-	err = config.Tmpl.ExecuteTemplate(w, "main.html", allInfo)
-
-	if err != nil {
-		log.Println("Controller/Post:", err)
-		fmt.Fprint(w, http.StatusInternalServerError)
-	}
-}
-
 func (*PostController) UPDATE(w http.ResponseWriter, r *http.Request) {
 	var params models.PostParam
 	var post models.Post
-	err := params.Parse(r)
+	var userSession models.UserSession
+
+	c, err := r.Cookie("session_token")
+	if err != nil {
+		r.Method = http.MethodGet
+		http.Redirect(w, r, "/login", http.StatusUnauthorized)
+		return
+	}
+
+	_, err = userSession.GET(c.Value)
+	if err != nil {
+		r.Method = http.MethodGet
+		http.Redirect(w, r, "/login", http.StatusUnauthorized)
+		return
+	}
+
+	err = params.Parse(r, userSession.User_id)
 	if err != nil {
 		log.Println("Controller/Post/Update dont pars postParam", err)
 		return
@@ -510,201 +289,6 @@ func (*PostController) DisLikePost(w http.ResponseWriter, r *http.Request) {
 	}
 	http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
 	w.WriteHeader(http.StatusMethodNotAllowed)
-}
-
-func (*PostController) LikeComment(w http.ResponseWriter, r *http.Request) {
-	var like models.LikeComment
-	// var user models.User
-	var userSession models.UserSession
-
-	if r.URL.Path[len("/comment/like/"):] == "" || r.Method != http.MethodPost {
-		fmt.Fprint(w, http.StatusMethodNotAllowed)
-		return
-	}
-
-	fmt.Println(r.Header.Get("Referer"))
-
-	if r.Method == http.MethodPost {
-		//Check Session cookie
-		c, err := r.Cookie("session_token")
-		if err != nil {
-			http.Redirect(w, r, "/login", http.StatusSeeOther)
-			w.WriteHeader(http.StatusUnauthorized)
-			log.Println(err)
-			return
-		}
-		user_id, err := userSession.GetUserId(c.Value)
-		if err != nil {
-			http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
-			w.WriteHeader(http.StatusUnauthorized)
-			log.Println(err)
-			return
-		}
-		post_id, err := strconv.Atoi(r.URL.Path[len("/comment/like/"):])
-		if err != nil {
-			http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
-			w.WriteHeader(http.StatusBadRequest)
-			log.Println(err)
-			return
-		}
-		like.GET(post_id, user_id)
-
-		if post_id == like.Comment_id && user_id == like.User_id {
-			err = like.DELETE(post_id, user_id)
-			if err != nil {
-				http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
-				w.WriteHeader(http.StatusInternalServerError)
-				log.Println(err)
-				return
-			}
-			if like.Liked != models.LikeTRUE {
-				_, err = like.CREATE(post_id, user_id)
-				if err != nil {
-					http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
-					w.WriteHeader(http.StatusInternalServerError)
-					log.Println(err)
-					return
-				}
-			}
-		} else {
-			_, err = like.CREATE(post_id, user_id)
-			if err != nil {
-				http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
-				w.WriteHeader(http.StatusInternalServerError)
-				log.Println(err)
-				return
-			}
-		}
-		http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
-		w.WriteHeader(http.StatusOK)
-		return
-	}
-	http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
-	w.WriteHeader(http.StatusMethodNotAllowed)
-}
-
-func (*PostController) DisLikeComment(w http.ResponseWriter, r *http.Request) {
-	var like models.LikeComment
-	// var user models.User
-	var userSession models.UserSession
-
-	if r.URL.Path[len("/comment/dislike/"):] == "" || r.Method != http.MethodPost {
-		fmt.Fprint(w, http.StatusMethodNotAllowed)
-		return
-	}
-
-	fmt.Println(r.Header.Get("Referer"))
-
-	if r.Method == http.MethodPost {
-		//Check Session cookie
-		c, err := r.Cookie("session_token")
-		if err != nil {
-			http.Redirect(w, r, "/login", http.StatusSeeOther)
-			w.WriteHeader(http.StatusUnauthorized)
-			log.Println(err)
-			return
-		}
-		user_id, err := userSession.GetUserId(c.Value)
-		if err != nil {
-			http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
-			w.WriteHeader(http.StatusUnauthorized)
-			log.Println(err)
-			return
-		}
-		post_id, err := strconv.Atoi(r.URL.Path[len("/comment/dislike/"):])
-		if err != nil {
-			http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
-			w.WriteHeader(http.StatusBadRequest)
-			log.Println(err)
-			return
-		}
-		like.GET(post_id, user_id)
-
-		if post_id == like.Comment_id && user_id == like.User_id {
-			err = like.DELETE(post_id, user_id)
-			if err != nil {
-				http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
-				w.WriteHeader(http.StatusInternalServerError)
-				log.Println(err)
-				return
-			}
-			if like.Liked != models.Dislike {
-				_, err = like.CREATEDISLIKE(post_id, user_id)
-				if err != nil {
-					http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
-					w.WriteHeader(http.StatusInternalServerError)
-					log.Println(err)
-					return
-				}
-			}
-		} else {
-			_, err = like.CREATEDISLIKE(post_id, user_id)
-			if err != nil {
-				http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
-				w.WriteHeader(http.StatusInternalServerError)
-				log.Println(err)
-				return
-			}
-		}
-		http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
-		w.WriteHeader(http.StatusOK)
-		return
-	}
-	http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
-	w.WriteHeader(http.StatusMethodNotAllowed)
-}
-
-func (*PostController) Comment(w http.ResponseWriter, r *http.Request) {
-	// var user models.User
-	var userSession models.UserSession
-	var user_id int
-	var commParams models.CommentParams
-	var comment models.Comment
-
-	if r.Method == http.MethodPost {
-		com := r.FormValue("Comment")
-		if com != "" {
-			post_id, err := strconv.Atoi(r.URL.Path[len("/post/comment/"):])
-			if err != nil {
-				w.WriteHeader(http.StatusBadRequest)
-				http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
-
-				log.Println(err)
-				return
-			}
-			c, err := r.Cookie("session_token")
-			if err == nil {
-				user_id, err = userSession.GetUserId(c.Value)
-				if err == nil {
-					commParams.Text = com
-					commParams.Post_id = post_id
-					commParams.User_id = user_id
-					_, err := comment.CREATE(commParams)
-					if err != nil {
-						http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
-						w.WriteHeader(http.StatusOK)
-						log.Println(err)
-						return
-					}
-				}
-			} else {
-				http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
-				w.WriteHeader(http.StatusUnauthorized)
-				log.Println(err)
-				return
-			}
-
-		} else {
-			http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
-		return
-	}
-	w.WriteHeader(http.StatusMethodNotAllowed)
-	http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
 }
 
 func GetInfo(w http.ResponseWriter, r *http.Request) allInfoCreate {

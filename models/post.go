@@ -26,12 +26,13 @@ type PostParam struct {
 	Tags     []string
 }
 
-func (param *PostParam) Parse(r *http.Request) error {
+func (param *PostParam) Parse(r *http.Request, user_id int) error {
 	err := r.ParseForm()
 	param.Title = r.FormValue("Title")
 	param.Content = r.FormValue("Content")
 	param.Category = r.FormValue("Category")
 	param.Tags = r.Form["Tag[]"]
+	param.User_id = user_id
 	return err
 }
 
@@ -157,6 +158,26 @@ func (*Post) GETALLINCATEGORY(category string) ([]Post, error) {
 			posts = append(posts, currentPost)
 		}
 		return posts, err
+	}
+	return posts, err
+}
+
+func (*Post) GETALLUSERPOST(id int) ([]Post, error) {
+	rows, err := config.DB.Query("SELECT * FROM posts WHERE id_user=?;", id)
+	var posts []Post
+	if err == nil {
+		for rows.Next() {
+			var currentPost Post
+			rows.Scan(
+				&currentPost.Id,
+				&currentPost.Title,
+				&currentPost.Content,
+				&currentPost.Creat_at,
+				&currentPost.Update_to,
+				&currentPost.User_id,
+			)
+			posts = append(posts, currentPost)
+		}
 	}
 	return posts, err
 }

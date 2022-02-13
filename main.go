@@ -28,16 +28,17 @@ func main() {
 	var userH controllers.UserController
 
 	mux := http.NewServeMux()
-	// router := httprouter.New()
 
 	mux.HandleFunc("/", postH.GetAll)
-	mux.Handle("/post/", http.HandlerFunc(postH.GetSinglePost))
 	mux.Handle("/post/create", middleware.Authentication(http.HandlerFunc(postH.CreateNewPost)))
 	mux.Handle("/post/like/", middleware.Authentication(http.HandlerFunc(postH.LikePost)))
 	mux.Handle("/post/dislike/", middleware.Authentication(http.HandlerFunc(postH.DisLikePost)))
+	mux.Handle("/post/comment/", middleware.Authentication(http.HandlerFunc(postH.Comment)))
 	mux.Handle("/comment/like/", middleware.Authentication(http.HandlerFunc(postH.LikeComment)))
 	mux.Handle("/comment/dislike/", middleware.Authentication(http.HandlerFunc(postH.DisLikeComment)))
-	mux.Handle("/post/comment/", middleware.Authentication(http.HandlerFunc(postH.Comment)))
+
+	mux.HandleFunc("/user/", postH.GetAllUserPost)
+	mux.HandleFunc("/post/", postH.GetSinglePost)
 	mux.HandleFunc("/tag/", postH.GetAllInTag)
 	mux.HandleFunc("/category/", postH.GetAllInCategory)
 	mux.HandleFunc("/login", userH.LogIn)
